@@ -91,15 +91,17 @@ namespace gr {
                      gr::io_signature::make(1, 1, type_to_size(type)),
                      gr::io_signature::make(0, 0, 0)),
       d_fp(0), d_new_fp(0), d_append(append), d_itemsize(type_to_size(type)),
-      d_type(type), d_debug(debug)
+      d_type(type), d_samp_rate(samp_rate), d_description(description), d_author(author),
+      d_license(license), d_hardware(hardware), d_debug(debug), d_meta_written(false)
     {
-      d_global = meta_namespace::build_global_object(type);
-      d_global.set("core:sample_rate", samp_rate);
-      d_global.set("core:description", description);
-      d_global.set("core:author", author);
-      d_global.set("core:license", license);
-      d_global.set("core:hw", hardware);
-      d_captures.push_back(meta_namespace::build_capture_segment(0));
+      reset_meta();
+      // d_global = meta_namespace::build_global_object(type);
+      // d_global.set("core:sample_rate", samp_rate);
+      // d_global.set("core:description", description);
+      // d_global.set("core:author", author);
+      // d_global.set("core:license", license);
+      // d_global.set("core:hw", hardware);
+      // d_captures.push_back(meta_namespace::build_capture_segment(0));
       open(filename.c_str());
       d_temp_tags.reserve(32);
 
@@ -114,6 +116,20 @@ namespace gr {
     sink_impl::~sink_impl()
     {
       close();
+    }
+
+    void
+    sink_impl::reset_meta() {
+      std::cout << "reset_meta()" << std::endl;
+      d_global = meta_namespace::build_global_object(d_type);
+      d_global.set("core:sample_rate", d_samp_rate);
+      d_global.set("core:description", d_description);
+      d_global.set("core:author", d_author);
+      d_global.set("core:license", d_license);
+      d_global.set("core:hw", d_hardware);
+      d_captures.clear();
+      d_captures.push_back(meta_namespace::build_capture_segment(0));
+      d_annotations.clear();
     }
 
     void
@@ -207,6 +223,7 @@ namespace gr {
 
     void
     sink_impl::set_global_meta(std::string key, pmt::pmt_t val) {
+      std::cout << boost::format("set_global_meta('%1%', %2%)") % key % val << std::endl;
       d_global.set(key, val);
     }
 
@@ -241,6 +258,7 @@ namespace gr {
     sink_impl::open(const char *filename)
     {
       gr::thread::scoped_lock guard(d_mutex); // hold mutex for duration of this function
+      std::cout << boost::format("open('%1%')") % filename << std::endl;
 
       d_new_data_path = to_data_path(filename);
       d_new_meta_path = meta_path_from_data(d_new_data_path);
@@ -274,24 +292,33 @@ namespace gr {
       }
 
       d_updated = true;
-      return d_new_fp != 0;
+      std::cout << __LINE__ << std::endl;
+      return d_new_fp != nullptr;
     }
 
     void
     sink_impl::do_update()
     {
       if(d_updated) {
-
         // hold mutex for duration of this block
         gr::thread::scoped_lock guard(d_mutex);
+        std::cout << "d_updated was true in d_update" << std::endl;
 
-        if(d_fp) fclose(d_fp);
+        // if there is curretly an open fp, close it and write metadata
+        if(d_fp) {
+          std::fclose(d_fp);
+          write_meta();
+          std::cout << "Calling reset_meta in do_update" << std::endl;
+          reset_meta();
+        }
 
         // install new file pointer
         d_fp = d_new_fp;
         d_data_path = d_new_data_path;
         d_meta_path = d_new_meta_path;
-        d_new_fp = 0;
+        d_meta_written = d_new_fp == nullptr ? true : false;
+
+        d_new_fp = nullptr;
         d_updated = false;
       }
     }
@@ -301,22 +328,36 @@ namespace gr {
     {
       // hold mutex for duration of this function
       gr::thread::scoped_lock guard(d_mutex);
-
-      if(d_fp) {
-        fclose(d_fp);
-        d_fp = NULL;
-        write_meta();
+      std::cout << "close()" << std::endl;
+      std::cout << __LINE__ << std::endl;
+      if(d_new_fp != nullptr) {
+      std::cout << __LINE__ << std::endl;
+        fclose(d_new_fp);
+      std::cout << __LINE__ << std::endl;
+        d_new_fp = nullptr;
+      std::cout << __LINE__ << std::endl;
       }
+      d_updated = true;
     }
 
     void
     sink_impl::write_meta()
     {
+      std::cout << __LINE__ << std::endl;
       if(d_debug) {
         std::cout << "meta_path = " << d_meta_path << std::endl;
       }
+      std::cout << boost::format("write_meta() d_meta_path = %1%") % d_meta_path << std::endl;
+      if(d_meta_written) {
+        std::cout << "meta already written, returning early" << std::endl;
+        return;
+      }
 
-      FILE *fp = fopen(d_meta_path.c_str(), "w");
+      std::cout << "d_meta_path = " << d_meta_path << std::endl;
+      FILE *fp = std::fopen(d_meta_path.c_str(), "w");
+      if(fp == nullptr) {
+        std::cout << "Got nullptr in write_meta" << std::endl;
+      }
       char write_buf[65536];
       rapidjson::FileWriteStream file_stream(fp, write_buf, sizeof(write_buf));
 
@@ -335,10 +376,13 @@ namespace gr {
       writer.EndArray();
 
       // sort annotations
-      std::sort(d_annotations.begin(), d_annotations.end(), [](const meta_namespace &a, const meta_namespace &b) {
-        // TODO: This may need to become a more complex sort if the spec changes based on https://github.com/gnuradio/SigMF/issues/90
-        return pmt::to_uint64(a.get("core:sample_start")) < pmt::to_uint64(b.get("core:sample_start"));
-      });
+      std::sort(d_annotations.begin(), d_annotations.end(),
+                [](const meta_namespace &a, const meta_namespace &b) {
+                  // TODO: This may need to become a more complex sort if the spec changes
+                  // based on https://github.com/gnuradio/SigMF/issues/90
+                  return pmt::to_uint64(a.get("core:sample_start")) <
+                    pmt::to_uint64(b.get("core:sample_start"));
+                });
 
       writer.String("annotations");
       writer.StartArray();
@@ -349,13 +393,18 @@ namespace gr {
       writer.EndArray();
 
       writer.EndObject();
-      fclose(fp);
+
+      std::fclose(fp);
+      d_meta_written = true;
+      std::cout << __LINE__ << std::endl;
     }
 
     bool
     sink_impl::stop()
     {
+      std::cout << "stop()" << std::endl;
       close();
+      write_meta();
       return true;
     }
 
