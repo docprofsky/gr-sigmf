@@ -31,4 +31,5 @@ except ImportError:
 	pass
 
 # import any pure python here
+from usrp_gps_probe import usrp_gps_probe
 #

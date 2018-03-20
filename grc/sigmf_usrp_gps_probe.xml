@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<block>
+  <name>USRP GPS Probe</name>
+  <key>sigmf_usrp_gps_probe</key>
+  <category>[SigMF]</category>
+  <import>import sigmf</import>
+  <make>sigmf.usrp_gps_probe(self.$block_id(), $interval)</make>
+
+  <param>
+    <name>USRP Block ID</name>
+    <key>block_id</key>
+    <value>uhd_usrp_source_0</value>
+    <type>string</type>
+  </param>
+  <param>
+    <name>Probe Interval (ms)</name>
+    <key>interval</key>
+    <value>1000</value>
+    <type>real</type>
+  </param>
+
+  <source>
+    <name>out</name>
+    <type>message</type>
+  </source>
+</block>
