@@ -94,6 +94,8 @@ namespace gr {
       // command message port
       message_port_register_in(COMMAND);
       set_msg_handler(COMMAND, boost::bind(&sink_impl::on_command_message, this, _1));
+      message_port_register_in(ANNOTATIONS);
+      set_msg_handler(ANNOTATIONS, boost::bind(&sink_impl::on_annotation_message, this, _1));
     }
 
     /*
@@ -253,6 +255,36 @@ namespace gr {
         GR_LOG_ERROR(d_logger,
                      boost::format("Invalid command string received in dict: %s") % msg);
         return;
+      }
+    }
+
+    void
+    sink_impl::on_annotation_message(pmt::pmt_t msg)
+    {
+      if(!pmt::is_dict(msg)) {
+        GR_LOG_ERROR(d_logger, boost::format("Annotation message is not a dict: %s") % msg);
+        return;
+      }
+
+      uint64_t sample_start;
+      if(pmt::dict_has_key(msg, pmt::mp("core:sample_start"))) {
+        sample_start = pmt::to_uint64(pmt::dict_ref(msg, pmt::mp("core:sample_start"), pmt::PMT_NIL));
+      } else {
+        sample_start = nitems_read(0);
+      }
+
+      uint64_t sample_count = pmt::to_uint64(pmt::dict_ref(msg, pmt::mp("core:sample_count"), pmt::from_long(1)));
+
+      pmt::pmt_t items = pmt::dict_items(msg);
+      size_t len = pmt::length(items);
+
+      for(size_t ii = 0; ii < len; ii++) {
+        pmt::pmt_t pair = pmt::nth(ii, items);
+        std::string key = pmt::symbol_to_string(pmt::car(pair));
+        pmt::pmt_t val = pmt::cdr(pair);
+        if((key != "core:sample_start") && (key != "core:sample_count")) {
+          set_annotation_meta(sample_start, sample_count, key, val);
+        }
       }
     }
 

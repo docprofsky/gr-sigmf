@@ -33,10 +33,12 @@ class usrp_gps_probe(gr.basic_block):
     position. If a GPS sensor is available and has a position fix, emit a
     message containing the decoded position and time of the radio.
     """
-    def __init__(self, usrp_block, interval, sensor='gps_gprmc'):
+    def __init__(self, usrp_block, interval, require_valid=True,
+                 sensor='gps_gprmc'):
         gr.basic_block.__init__(self, name="usrp_gps_probe",
                                 in_sig=None, out_sig=None)
         self.interval = interval
+        self.require_valid = require_valid
         self.sensor = sensor
         self.usrp_block = usrp_block
         self.message_port_register_out(pmt.intern('out'))
@@ -57,11 +59,22 @@ class usrp_gps_probe(gr.basic_block):
         return True
 
     @classmethod
-    def parse_nmea_degrees(cls, s):
+    def parse_nmea_latitude(cls, s, dir):
         degrees = Decimal(s[:2])
         minutes = Decimal(s[2:])
-        frac_degrees = minutes / 60
-        return degrees + frac_degrees
+        degrees += (minutes / 60)
+        if dir == 'S':
+            degrees = -degrees
+        return degrees
+
+    @classmethod
+    def parse_nmea_longitude(cls, s, dir):
+        degrees = Decimal(s[:3])
+        minutes = Decimal(s[3:])
+        degrees += (minutes / 60)
+        if dir == 'W':
+            degrees = -degrees
+        return degrees
 
     @classmethod
     def parse_nmea_timestamp(cls, utc_date, utc_time):
@@ -78,13 +91,8 @@ class usrp_gps_probe(gr.basic_block):
         utc_time = fields[1]  # HHMMSS.mm
         valid = fields[2] == 'A'
 
-        lat = cls.parse_nmea_degrees(fields[3])
-        if fields[4] == 'S':
-            lat = -lat
-
-        lon = cls.parse_nmea_degrees(fields[5])
-        if fields[6] == 'W':
-            lon = -lon
+        lat = cls.parse_nmea_latitude(fields[3], fields[4])
+        lon = cls.parse_nmea_longitude(fields[5], fields[6])
 
         utc_date = fields[9]  # as DDMMYY
         timestamp = cls.parse_nmea_timestamp(utc_date, utc_time)
@@ -101,6 +109,11 @@ class usrp_gps_probe(gr.basic_block):
         sensor_val = self.usrp_block.get_mboard_sensor(self.sensor)
         label, sentence = sensor_val.to_pp_string().split(': ', 1)
         parsed = self.parse_nmea_sentence(sentence)
-        if parsed['valid']:
-            msg = pmt.to_pmt(parsed)
+        if parsed['valid'] or not self.require_valid:
+            msg = pmt.to_pmt({
+                'core:latitude': parsed['latitude'],
+                'core:longitude': parsed['longitude'],
+            })
             self.message_port_pub(pmt.intern('out'), msg)
+        else:
+            print("WARNING: Not emitting GPS message, fix invalid.")

@@ -4,7 +4,7 @@
   <key>sigmf_usrp_gps_probe</key>
   <category>[SigMF]</category>
   <import>import sigmf</import>
-  <make>sigmf.usrp_gps_probe(self.$block_id(), $interval)</make>
+  <make>sigmf.usrp_gps_probe(self.$block_id(), $interval, $require_valid)</make>
 
   <param>
     <name>USRP Block ID</name>
@@ -17,6 +17,20 @@
     <key>interval</key>
     <value>1000</value>
     <type>real</type>
+  </param>
+  <param>
+    <name>Require Valid Fix</name>
+    <key>require_valid</key>
+    <value>True</value>
+    <type>enum</type>
+    <option>
+      <name>Yes</name>
+      <key>True</key>
+    </option>
+    <option>
+      <name>No</name>
+      <key>False</key>
+    </option>
   </param>
 
   <source>
