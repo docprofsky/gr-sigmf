@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<block>
+  <name>Extract Annotation</name>
+  <key>sigmf_extract_annotation</key>
+  <category>[SigMF]</category>
+  <import>import sigmf</import>
+  <make>sigmf.extract_annotation($retune)</make>
+
+  <param>
+    <name>Retune</name>
+    <key>retune</key>
+    <value>True</value>
+    <type>enum</type>
+    <option>
+      <name>Yes</name>
+      <key>True</key>
+    </option>
+    <option>
+      <name>No</name>
+      <key>False</key>
+    </option>
+  </param>
+
+  <sink>
+    <name>in</name>
+    <type>complex</type>
+  </sink>
+
+  <source>
+    <name>out</name>
+    <type>complex</type>
+  </source>
+</block>

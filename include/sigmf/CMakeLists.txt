@@ -34,5 +34,6 @@ install(FILES
     meta_namespace.h
     source.h
     annotation_sink.h
-    usrp_gps_message_source.h DESTINATION include/sigmf
+    usrp_gps_message_source.h
+    extract_annotation.h DESTINATION include/sigmf
 )

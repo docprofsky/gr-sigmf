@@ -40,6 +40,7 @@ list(APPEND sigmf_sources
     writer_utils.cc
     reader_utils.cc
     usrp_gps_message_source_impl.cc
+    extract_annotation_impl.cc
 )
 
 set(sigmf_sources "${sigmf_sources}" PARENT_SCOPE)
