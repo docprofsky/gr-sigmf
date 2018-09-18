@@ -50,7 +50,7 @@
     </param>
     <param>
       <key>id</key>
-      <value>demo_sigmf_fm_player</value>
+      <value>demo_sigmf_play_simple</value>
     </param>
     <param>
       <key>max_nouts</key>
@@ -117,7 +117,7 @@
     </param>
     <param>
       <key>value</key>
-      <value>10e6</value>
+      <value>20e6</value>
     </param>
   </block>
   <block>
@@ -277,7 +277,7 @@
     </param>
     <param>
       <key>fc</key>
-      <value>0</value>
+      <value>98e6</value>
     </param>
     <param>
       <key>comment</key>
@@ -293,7 +293,7 @@
     </param>
     <param>
       <key>fftsize</key>
-      <value>1024</value>
+      <value>2048</value>
     </param>
     <param>
       <key>_coordinate</key>
@@ -309,7 +309,7 @@
     </param>
     <param>
       <key>grid</key>
-      <value>False</value>
+      <value>True</value>
     </param>
     <param>
       <key>id</key>
@@ -317,11 +317,11 @@
     </param>
     <param>
       <key>int_max</key>
-      <value>10</value>
+      <value>-50</value>
     </param>
     <param>
       <key>int_min</key>
-      <value>-140</value>
+      <value>-80</value>
     </param>
     <param>
       <key>legend</key>
@@ -477,7 +477,7 @@
     </param>
     <param>
       <key>update_time</key>
-      <value>0.10</value>
+      <value>1/30.</value>
     </param>
     <param>
       <key>wintype</key>
@@ -504,7 +504,7 @@
     </param>
     <param>
       <key>filename</key>
-      <value>/tmp/example.sigmf-meta</value>
+      <value>/tmp/fm-band.sigmf-meta</value>
     </param>
     <param>
       <key>_coordinate</key>

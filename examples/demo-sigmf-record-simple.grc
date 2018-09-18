@@ -117,7 +117,7 @@
     </param>
     <param>
       <key>value</key>
-      <value>250e3</value>
+      <value>0</value>
     </param>
   </block>
   <block>
@@ -128,7 +128,7 @@
     </param>
     <param>
       <key>value</key>
-      <value>102.5e6</value>
+      <value>98e6</value>
     </param>
     <param>
       <key>_enabled</key>
@@ -191,7 +191,7 @@
     </param>
     <param>
       <key>value</key>
-      <value>40</value>
+      <value>60</value>
     </param>
     <param>
       <key>_enabled</key>
@@ -270,7 +270,7 @@
     </param>
     <param>
       <key>value</key>
-      <value>10e6</value>
+      <value>20e6</value>
     </param>
   </block>
   <block>
@@ -500,7 +500,7 @@
     <key>sigmf_sink</key>
     <param>
       <key>author</key>
-      <value></value>
+      <value>Scott</value>
     </param>
     <param>
       <key>alias</key>
@@ -516,7 +516,7 @@
     </param>
     <param>
       <key>description</key>
-      <value></value>
+      <value>GRCon 2018 Demo FM Band Capture</value>
     </param>
     <param>
       <key>_enabled</key>
@@ -828,7 +828,7 @@
     </param>
     <param>
       <key>filename</key>
-      <value>/tmp/example</value>
+      <value>/tmp/fm-band.sigmf</value>
     </param>
     <param>
       <key>_coordinate</key>
@@ -840,7 +840,7 @@
     </param>
     <param>
       <key>hardware</key>
-      <value></value>
+      <value>USRP</value>
     </param>
     <param>
       <key>id</key>
