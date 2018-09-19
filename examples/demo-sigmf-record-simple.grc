@@ -828,7 +828,7 @@
     </param>
     <param>
       <key>filename</key>
-      <value>/tmp/fm-band.sigmf</value>
+      <value>/cap/fm-band.sigmf-meta</value>
     </param>
     <param>
       <key>_coordinate</key>
@@ -2051,7 +2051,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(348, 400)</value>
+      <value>(337, 371)</value>
     </param>
     <param>
       <key>_rotation</key>
