@@ -116,6 +116,8 @@ endif(APPLE)
 find_package(CppUnit)
 find_package(Doxygen)
 
+find_package(pybind11 REQUIRED)
+
 ########################################################################
 # Setup doxygen option
 ########################################################################
