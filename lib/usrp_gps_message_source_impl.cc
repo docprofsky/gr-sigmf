@@ -148,6 +148,7 @@ namespace gr {
         return;
       }
       const std::string gps_gpgga = d_usrp->get_mboard_sensor("gps_gpgga", d_mboard).to_pp_string();
+      const std::string gps_gprmc = d_usrp->get_mboard_sensor("gps_gprmc", d_mboard).to_pp_string();
 
       // Tokenize gpgga sentence
       std::vector<std::string> tokens;
@@ -187,6 +188,7 @@ namespace gr {
       values = pmt::dict_add(values, pmt::intern("hdop"), pmt::from_double(hdop));
       values = pmt::dict_add(values, pmt::intern("num_sats"), pmt::from_long(num_sats));
       values = pmt::dict_add(values, pmt::intern("gps_gpgga"), pmt::string_to_symbol(gps_gpgga));
+      values = pmt::dict_add(values, pmt::intern("gps_gprmc"), pmt::string_to_symbol(gps_gprmc));
 
       message_port_pub(pmt::intern("out"), values);
     }

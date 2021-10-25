@@ -329,6 +329,15 @@ namespace gr {
         set_annotation_meta(sample_start, sample_count, "core:longitude", lon);
         set_annotation_meta(sample_start, sample_count, "core:generator", pmt::string_to_symbol("USRP GPS Message"));
       }
+      std::string keys[] = {"gps_gpgga", "gps_gprmc"};
+
+      for (const std::string &key : keys) {
+	pmt::pmt_t symbol = pmt::string_to_symbol(key);
+	if (pmt::dict_has_key(msg, symbol)) {
+	  set_annotation_meta(sample_start, sample_count, "core:" + key,
+			  pmt::dict_ref(msg, symbol, pmt::PMT_NIL));
+	}
+      }
     }
 
     std::string
