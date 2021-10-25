@@ -29,6 +29,7 @@
 #include <gnuradio/blocks/head.h>
 #include <gnuradio/top_block.h>
 #include <gnuradio/uhd/usrp_source.h>
+#include <gnuradio/blocks/keep_one_in_n.h>
 #include <sigmf/meta_namespace.h>
 #include <sigmf/sigmf_utils.h>
 #include <sigmf/sink.h>
@@ -220,7 +221,8 @@ main(int argc, char *argv[])
     ("duration", po::value<double>(&duration_seconds), "If set, then only capture for this many seconds")
     ("overwrite", po::bool_switch(&overwrite)->default_value(false), "Overwrite output file")
     ("global-meta", po::value<std::vector<std::string> >(&extra_global_meta), "Additional global metadata")
-    ("output-file", po::value<std::string>(&output_filename)->default_value(""), "File to write to");
+    ("output-file", po::value<std::string>(&output_filename)->default_value(""), "File to write to")
+    ("decimate,d", po::value<int>(), "amount to decimate by before writing to disk");
   // clang-format on
   po::positional_options_description positional_options;
   positional_options.add("output-file", 1);
@@ -357,12 +359,22 @@ main(int argc, char *argv[])
 
   uhd::dict<std::string, std::string> usrp_info = usrp_source->get_usrp_info();
 
+  std::string sigmf_format = uhd_format_to_sigmf_format(cpu_format_str);
+
+  bool decimate = false;
+  gr::blocks::keep_one_in_n::sptr decim_block;
+
+  if (!vm["decimate"].empty()) {
+    decimate = true;
+    size_t itemsize = format_str_to_size(sigmf_format);
+    decim_block = gr::blocks::keep_one_in_n::make(itemsize, vm["decimate"].as<int>());
+    sample_rate /= decimate;
+  }
+
   if(output_filename == "") {
     // Then generate a filename
     output_filename = generate_filename(usrp_info["mboard_id"], center_freq, sample_rate, gain);
   }
-
-  std::string sigmf_format = uhd_format_to_sigmf_format(cpu_format_str);
 
   if(!overwrite && fs::exists(gr::sigmf::to_data_path(output_filename))) {
     std::cerr << "Error: specified output file already exists. To overwrite it, set the --overwrite flag." << std::endl;
@@ -431,9 +443,19 @@ main(int argc, char *argv[])
     gr::blocks::head::sptr head_block = gr::blocks::head::make(sample_size, samples_for_duration);
 
     tb->connect(usrp_source, 0, head_block, 0);
-    tb->connect(head_block, 0, file_sink, 0);
+    if (decimate) {
+      tb->connect(head_block, 0, decim_block, 0);
+      tb->connect(decim_block, 0, file_sink, 0);
+    } else {
+      tb->connect(head_block, 0, file_sink, 0);
+    }
   } else {
-    tb->connect(usrp_source, 0, file_sink, 0);
+    if (decimate) {
+      tb->connect(usrp_source, 0, decim_block, 0);
+      tb->connect(decim_block, 0, file_sink, 0);
+    } else {
+      tb->connect(usrp_source, 0, file_sink, 0);
+    }
   }
 
   tb->msg_connect(gps_source, "out", file_sink, "gps");
